@@ -5,8 +5,8 @@ st.title("Filter to Combos with Sister Matches")
 st.markdown("""
 Paste a list of 5-digit combos below (one per line or comma-separated).
 This tool will keep combos that have:
-- Both immediate neighbors (-1 and +1), OR
-- At least one +/-2 neighbor.
+- At least two neighbors that differ by ±1 in any **one** digit position (sister cluster).
+- Optionally include those with two neighbors that differ by ±2 if no ±1 cluster is found.
 """)
 
 user_input = st.text_area("Paste your combos here:", height=300)
@@ -31,14 +31,15 @@ if user_input:
     sister_matches = []
     for combo in combos:
         neighbors1 = get_neighbors(combo, 1)
-        neighbors2 = get_neighbors(combo, 2)
+        cluster1 = [n for n in neighbors1 if n in combo_set]
 
-        has_minus1 = any(n in combo_set for n in neighbors1 if int(n) < int(combo))
-        has_plus1  = any(n in combo_set for n in neighbors1 if int(n) > int(combo))
-        has_2step  = any(n in combo_set for n in neighbors2)
-
-        if (has_minus1 and has_plus1) or has_2step:
+        if len(cluster1) >= 2:
             sister_matches.append(combo)
+        else:
+            neighbors2 = get_neighbors(combo, 2)
+            cluster2 = [n for n in neighbors2 if n in combo_set]
+            if len(cluster2) >= 2:
+                sister_matches.append(combo)
 
     sister_matches = sorted(set(sister_matches))
 
