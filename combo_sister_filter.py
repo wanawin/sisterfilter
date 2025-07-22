@@ -4,9 +4,9 @@ st.title("Filter to Combos with Sister Matches")
 
 st.markdown("""
 Paste a list of 5-digit combos below (one per line or comma-separated).
-This tool will keep combos that have:
-- At least two neighbors that differ by ±1 in any **one** digit position (sister cluster).
-- Optionally include those with two neighbors that differ by ±2 if no ±1 cluster is found.
+This tool will:
+- Prioritize combos with **at least two ±1 digit neighbors**.
+- Also return a separate section for combos with **at least two ±2 digit neighbors** (if no ±1 match).
 """)
 
 user_input = st.text_area("Paste your combos here:", height=300)
@@ -28,23 +28,33 @@ if user_input:
                     neighbors.append(new_combo)
         return neighbors
 
-    sister_matches = []
+    priority_matches = []
+    secondary_matches = []
+
     for combo in combos:
         neighbors1 = get_neighbors(combo, 1)
         cluster1 = [n for n in neighbors1 if n in combo_set]
 
         if len(cluster1) >= 2:
-            sister_matches.append(combo)
+            priority_matches.append(combo)
         else:
             neighbors2 = get_neighbors(combo, 2)
             cluster2 = [n for n in neighbors2 if n in combo_set]
             if len(cluster2) >= 2:
-                sister_matches.append(combo)
+                secondary_matches.append(combo)
 
-    sister_matches = sorted(set(sister_matches))
+    priority_matches = sorted(set(priority_matches))
+    secondary_matches = sorted(set(secondary_matches) - set(priority_matches))
 
-    st.success(f"Found {len(sister_matches)} combos with valid sister chains.")
-    st.markdown("### Copyable Result")
-    st.text("\n".join(sister_matches))
+    total_found = len(priority_matches) + len(secondary_matches)
+    st.success(f"Found {total_found} combos with valid sister chains.")
 
-    st.download_button("Download .txt", "\n".join(sister_matches), file_name="sister_combos.txt")
+    if priority_matches:
+        st.markdown("### Primary Sister Matches (±1)")
+        st.text("\n".join(priority_matches))
+        st.download_button("Download Primary (±1) .txt", "\n".join(priority_matches), file_name="primary_sister_combos.txt")
+
+    if secondary_matches:
+        st.markdown("### Secondary Sister Matches (±2 only)")
+        st.text("\n".join(secondary_matches))
+        st.download_button("Download Secondary (±2) .txt", "\n".join(secondary_matches), file_name="secondary_sister_combos.txt")
